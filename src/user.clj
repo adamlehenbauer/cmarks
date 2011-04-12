@@ -1,5 +1,7 @@
 (require '(clojure.contrib [repl-utils :as rutils]))
 (require '(net.cgrand [enlive-html :as html]))
+; stacktrace has few global symbols and its nice to have them without qualification
+(use 'clojure.stacktrace)
 ;(use 'clojure.contrib.pprint)
 
 (def classpath (seq (.getURLs (java.lang.ClassLoader/getSystemClassLoader))))
