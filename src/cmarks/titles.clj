@@ -36,11 +36,3 @@
 (defn title-candidates
   [url] ;str
   (clean-candidates (data/find-resource url)))
-
-(defn b
-  [i]
-  (Integer/toBinaryString i))
-
-(defn h
-  [i]
-  (Integer/toHexString i))
