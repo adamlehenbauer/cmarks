@@ -4,23 +4,14 @@
     [clojure.string :as string]
     [cmarks.data :as data]))
 
-(defn hs [res]
-  "headers h1-h4"
-  (vec (flatten 
-         (for [hx [:h1 :h2 :h3 :h4]]
-           (map html/text (html/select res [hx]))))))
+; like flatten but leaves vectors as is
+(defn vflat [f x]
+  (filter (complement f)
+    (rest (tree-seq f seq x))))
 
-(defn page-title
-  [res]
-  "head/title element"
-  (map html/text (html/select res [:head/title])))
-
-(defn- raw-candidates
-  [res] ;html-resource
-  ;helpd: http://groups.google.com/group/clojure/browse_thread/thread/db2cdef20d7e6245?pli=1
-  (concat
-    (hs res)
-    (page-title res)))
+(defn hx [res h]
+  "gets seq of headers in a resource"
+  (map html/text (html/select res [h])))
 
 (defn clean-title
   [t]
@@ -29,10 +20,44 @@
     (string/replace ,, #" +" " ")
     string/trim))
 
-(defn clean-candidates 
+(defn entry [title score]
+  (let [title (clean-title title)]
+    (if (string/blank? title)
+      nil
+      {:score score :title title}))) 
+
+(defn hs [res]
+  (filter identity ;drop nils
+    (flatten
+      (for [[h score] [[:h1 4] [:h2 3] [:h3 2] [:h4 1]]]
+        (for [title (hx res h)]
+          (entry title score))))))
+
+;(defn hs [res]
+;  "headers h1-h4"
+;  (let [score {:h1 4, :h2 3, :h3 2, :h4 1}]
+;    (filter (complement string/blank?)
+;      (for [hx [:h1 :h2 :h3 :h4]]
+;        (map #(hash-map :score (hx score) :title (html/text %)) (html/select res [hx]))))))
+
+(defn page-title
   [res]
-  (map clean-title (raw-candidates res)))
+  "head/title element"
+  (entry
+    (first
+      (map html/text (html/select res [:head/title]))) 4))
+
+(defn- raw-candidates
+  [res] ;html-resource
+  ;helpd: http://groups.google.com/group/clojure/browse_thread/thread/db2cdef20d7e6245?pli=1
+  (concat
+    (hs res)
+    (page-title res)))
+
+;(defn clean-candidates 
+;  [res]
+;  (map clean-title (raw-candidates res)))
 
 (defn title-candidates
   [url] ;str
-  (clean-candidates (data/find-resource url)))
+  (raw-candidates (data/find-resource url)))
